@@ -6,7 +6,7 @@ import {client} from 'utils/api-client'
 import {useMutation, useQueryClient} from 'react-query'
 import {useSingers} from 'utils/discover'
 import {Link} from 'react-router-dom'
-import {FaHome} from 'react-icons/fa'
+import {FaCcDiscover} from 'react-icons/fa'
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
 
@@ -21,7 +21,7 @@ function InputCrawl(props) {
   )
 }
 
-function CrawlForm() {
+function SingerForm() {
   const queryClient = useQueryClient()
   const {
     mutateAsync: create,
@@ -78,23 +78,15 @@ function CrawlForm() {
   )
 }
 
-/**
- * refactor two form
- * SingerForm
- * get api neu co singer -> check input -> old singer : newSinger input by hand
- *
- */
-
 const type_inputs = {
   INPUT: 'input',
   SELECT: 'select',
 }
 
-function SingerForm() {
-  const queryClient = useQueryClient()
-
+function CustomForm() {
   const [typeInput, setTypeInput] = React.useState(type_inputs.INPUT)
 
+  const queryClient = useQueryClient()
   const {data} = useSingers()
 
   const {
@@ -107,24 +99,27 @@ function SingerForm() {
     onSuccess: () => queryClient.refetchQueries('singers'),
   })
 
-  const isAvailabel = typeInput === type_inputs.SELECT && data?.singers.length
+  const hasSinger = typeInput === type_inputs.SELECT && data?.singers.length
+  const hasInputSinger = typeInput === type_inputs.INPUT
 
   function handleSubmitCustom(event) {
     event.preventDefault()
     const {singerName, avatarCustom, songName, songHref} = event.target.elements
-
-    createCustom({
+    const payload = {
       singerName: singerName.value,
-      avatar: avatarCustom.value,
       songName: songName.value,
       songHref: songHref.value,
-    })
+    }
+
+    if (hasInputSinger) {
+      payload.avatar = avatarCustom.value
+    }
+
+    createCustom(payload)
   }
 
   function handleChangeTypeInput() {
-    setTypeInput(
-      typeInput === type_inputs.INPUT ? type_inputs.SELECT : type_inputs.INPUT,
-    )
+    setTypeInput(hasInputSinger ? type_inputs.SELECT : type_inputs.INPUT)
   }
 
   return (
@@ -156,7 +151,7 @@ function SingerForm() {
       <FormGroup>
         <label htmlFor="singerName">SingerName:</label>
 
-        {isAvailabel ? (
+        {hasSinger ? (
           <select id="singerName">
             {data?.singers.map((si, i) => (
               <option key={`${si}-${i}`}>{si.name}</option>
@@ -166,7 +161,7 @@ function SingerForm() {
           <InputCrawl id="singerName" />
         )}
       </FormGroup>
-      {isAvailabel ? null : (
+      {hasSinger ? null : (
         <FormGroup>
           <label htmlFor="avatarCustom">Avatar:</label>
           <InputCrawl id="avatarCustom" />
@@ -208,7 +203,7 @@ function Crawl() {
           },
         }}
       >
-        <FaHome />
+        <FaCcDiscover />
       </Link>
       <div
         css={{
@@ -222,8 +217,8 @@ function Crawl() {
           },
         }}
       >
-        <CrawlForm />
         <SingerForm />
+        <CustomForm />
       </div>
     </div>
   )

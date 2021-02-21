@@ -79,7 +79,7 @@ api.put('/singer', async (req, res) => {
     const singer = await Singer.findOne({name})
 
     if (history) {
-      await updateHistory(singer, history, name)
+      await updateHistory(singer, history)
     }
 
     if (song) {
@@ -94,19 +94,15 @@ api.put('/singer', async (req, res) => {
 
 api.delete('/singer', async (req, res) => {
   try {
-    const {history} = req.body
+    const {_id, name: historyName} = req.body
     const {
       query: {name},
     } = req
-    const singer = await Singer.findOne({name})
-    const oldHistory = singer.history
 
-    if (!oldHistory.includes(history)) {
-      await Singer.updateOne(
-        {name},
-        {history: oldHistory.filter((h) => h !== history)},
-      )
-    }
+    const singer = await Singer.findOne({name})
+    await singer.history.id(_id).remove()
+
+    singer.save()
 
     return res.json({
       success: true,

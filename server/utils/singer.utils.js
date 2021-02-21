@@ -1,12 +1,18 @@
 const Singer = require('../models/singer')
+const mongoose = require('mongoose')
 
-async function updateHistory(singer, history, name) {
+async function updateHistory(singer, newHistory) {
   try {
-    const oldHistory = singer.history
+    const history = singer.history.find((hi) => hi.name === newHistory)
 
-    if (!oldHistory.includes(history)) {
-      await Singer.updateOne({name}, {history: [...oldHistory, history]})
+    if (!history) {
+      singer.history.push({
+        name: newHistory,
+        _id: mongoose.Types.ObjectId(),
+      })
     }
+
+    await singer.save()
   } catch (error) {
     throw new Error(error)
   }
@@ -19,7 +25,10 @@ function updateVocabulary(song, {jp, en, vi} = {}) {
   else song.vocabulary.push({jp, en, vi})
 }
 
-async function updateSong(singer, {_id, lyrics, vocabulary} = {}) {
+async function updateSong(
+  singer,
+  {_id, lyrics, vocabulary, hasRemembered, level} = {},
+) {
   const song = await singer.songs.id(_id)
 
   if (lyrics) {
@@ -30,7 +39,16 @@ async function updateSong(singer, {_id, lyrics, vocabulary} = {}) {
     updateVocabulary(song, vocabulary)
   }
 
-  singer.save()
+  if (hasRemembered !== undefined) {
+    song.hasRemembered = hasRemembered
+    song.rememberedDate = Date.now()
+  }
+
+  if (level) {
+    song.level = level
+  }
+
+  await singer.save()
 }
 
 module.exports = {updateHistory, updateSong}

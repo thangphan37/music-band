@@ -6,6 +6,8 @@ import {Discover} from 'screens/discover'
 import {Crawl} from 'screens/crawl'
 import {Song} from 'screens/song'
 import {NotFound} from 'screens/not-found'
+import {HomePage} from 'screens/home-page'
+import {GoodJob} from 'screens/good-job'
 import {FaMusic} from 'react-icons/fa'
 import * as mq from 'styles/media-queries'
 import * as colors from 'styles/colors'
@@ -13,8 +15,10 @@ import * as colors from 'styles/colors'
 function AppRoutes({isOpen}) {
   return (
     <Routes>
-      <Route path="/" element={<Crawl />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/crawl" element={<Crawl />} />
       <Route path="/discover" element={<Discover isOpen={isOpen} />} />
+      <Route path="/good-job" element={<GoodJob />} />
       <Route path="/song/:singerName/:songId" element={<Song />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -26,8 +30,10 @@ function calculateBg(pathname) {
     return colors.bgDiscover
   } else if (pathname.includes('/song')) {
     return colors.bgSong
-  } else {
+  } else if (pathname.includes('/crawl')) {
     return colors.bgCrawl
+  } else if (pathname.includes('/good-job')) {
+    return colors.bgGoodJob
   }
 }
 
@@ -35,6 +41,7 @@ function App() {
   const [isOpen, setIsOpen] = React.useState(false)
   const {pathname} = useLocation()
   const bgColor = calculateBg(pathname)
+  const isHomePage = pathname === '/'
 
   return (
     <>
@@ -47,8 +54,8 @@ function App() {
       />
       <div
         css={{
-          maxWidth: '840px',
-          margin: '3rem auto',
+          maxWidth: isHomePage ? 'unset' : '840px',
+          margin: isHomePage ? '0' : '3rem auto',
           ['@media ' + mq.small]: {
             width: '100%',
             margin: '0',

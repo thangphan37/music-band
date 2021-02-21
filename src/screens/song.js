@@ -1,11 +1,16 @@
 /**@jsx jsx */
 import {jsx} from '@emotion/react'
 import * as React from 'react'
-import {Video} from 'components/video'
+import {SongItem} from 'components/song-item'
 import {useParams} from 'react-router-dom'
-import {useQuery, useMutation, useQueryClient} from 'react-query'
-import {client} from 'utils/api-client'
-import {FaPlusCircle, FaBrain, FaCheck, FaMicrophoneAlt} from 'react-icons/fa'
+import {
+  FaPlusCircle,
+  FaBrain,
+  FaCheck,
+  FaMicrophoneAlt,
+  FaRegGrinWink,
+  FaRegSadCry,
+} from 'react-icons/fa'
 import {
   FullFallbackSpinner,
   CircleButton,
@@ -15,12 +20,16 @@ import {
   FormGroup,
   ErrorMessage,
 } from 'components/lib'
+import {NotFound} from 'screens/not-found'
 import {Modal, ModalOpenButton, ModalContents} from 'components/modal'
+import {Listbox, ListboxOption} from '@reach/listbox'
+import {useSong, useSongUpdate, levels, setLevelColor} from 'utils/song'
+import VisuallyHidden from '@reach/visually-hidden'
+import Tooltip from '@reach/tooltip'
 import * as mq from 'styles/media-queries'
 import * as colors from 'styles/colors'
 
 function Song() {
-  const queryClient = useQueryClient()
   const {singerName, songId} = useParams()
 
   const [newWord, setNewWord] = React.useState(null)
@@ -31,19 +40,12 @@ function Song() {
   const buttonRef = React.useRef(null)
   const lyricRef = React.useRef(null)
 
-  const {data, isLoading} = useQuery({
-    queryKey: ['songs', singerName, songId],
-    queryFn: () => client(`songs/${singerName}/${songId}`),
-  })
-
-  const {mutate: update, isLoading: isUpdating, isError, error} = useMutation(
-    (updateData) =>
-      client(`singer?name=${singerName}`, {data: updateData, method: 'PUT'}),
-    {
-      onSuccess: () =>
-        queryClient.refetchQueries(['songs', singerName, songId]),
-    },
+  const {data, isLoading} = useSong(singerName, songId)
+  const {mutate: update, isLoading: isUpdating, isError, error} = useSongUpdate(
+    singerName,
+    songId,
   )
+  const {mutate: updateLevel} = useSongUpdate(singerName, songId)
 
   if (isLoading) {
     return <FullFallbackSpinner />
@@ -52,23 +54,15 @@ function Song() {
   const {song} = data
 
   if (!song) {
-    return (
-      <div
-        css={{
-          display: 'flex',
-          justifyContent: 'center',
-          height: 'calc(100vh - 6rem)',
-          alignItems: 'center',
-          fontSize: '2rem',
-        }}
-      >
-        <ErrorMessage error={{message: 'Song not exists.'}} />
-      </div>
-    )
+    return <NotFound />
   }
   const {lyrics, vocabulary} = song
 
-  const rows = lyrics.split('\n').filter((r) => r)
+  const rows = lyrics
+    .split('\n')
+    // eslint-disable-next-line
+    .map((r) => r.replace(/[\！\!\△\※\？\?\、\『\』\「\」\[\]\(\)]/g, ''))
+    .filter((r) => r)
   const newLyrics = calculateNewWord(vocabulary, lyrics)
   const newWordHash = vocabulary.reduce(
     // eslint-disable-next-line
@@ -106,6 +100,10 @@ function Song() {
     const vocabulary = {jp: newWord, en: en.value, vi: vi.value}
 
     update({song: {_id: songId, vocabulary}})
+  }
+
+  function handleLevelChange(level) {
+    updateLevel({song: {_id: song._id, level}})
   }
 
   function handleNewWordHover(event) {
@@ -235,7 +233,11 @@ function Song() {
     return (
       <Modal>
         <ModalOpenButton onClick={() => setMemoTest({})}>
-          <Button aria-label="memorization test">
+          <Button
+            aria-label="memorization test"
+            variant={lyrics ? 'primary' : 'disabled'}
+            disabled={!lyrics}
+          >
             <FaBrain />
           </Button>
         </ModalOpenButton>
@@ -348,7 +350,7 @@ function Song() {
             : {}
 
           const rowVoice = (
-            <div css={{display: 'flex'}}>
+            <div css={{display: 'flex'}} key={`row-voice-${lineRef.current}`}>
               <p css={{fontSize: '1.5rem', ...fitCss}}>{transcript}</p>
               {row === transcript ? (
                 <FaCheck
@@ -385,7 +387,11 @@ function Song() {
             setIsOpenVoice(true)
           }}
         >
-          <Button aria-label="voice test" variant="secondary">
+          <Button
+            aria-label="voice test"
+            variant={lyrics ? 'secondary' : 'disabled'}
+            disabled={!lyrics}
+          >
             <FaMicrophoneAlt />
           </Button>
         </ModalOpenButton>
@@ -427,20 +433,109 @@ function Song() {
     )
   }
 
+  function handleSongRemember() {
+    update({song: {_id: song._id, hasRemembered: !song.hasRemembered}})
+  }
+
+  function ButtonRemember({label, bgButton, icon}) {
+    return (
+      <Tooltip label={label}>
+        <Button css={{background: bgButton}} onClick={handleSongRemember}>
+          {isUpdating ? <Spinner /> : icon}
+        </Button>
+      </Tooltip>
+    )
+  }
+
+  function Tag({bg, ...otherProps}) {
+    return (
+      <span
+        css={{
+          display: 'inline-block',
+          lineHeight: 1,
+          fontSize: 11,
+          textTransform: 'uppercase',
+          fontWeight: 'bolder',
+          marginLeft: 6,
+          padding: 4,
+          background: bg,
+          borderRadius: 2,
+          color: '#fff',
+        }}
+        {...otherProps}
+      />
+    )
+  }
+
+  function renderSongLevel() {
+    return (
+      <div
+        css={{
+          color: setLevelColor(song.level),
+        }}
+      >
+        <VisuallyHidden id={'level-song'}>Choose a level song</VisuallyHidden>
+        <Listbox
+          aria-labelledby={'level-song'}
+          value={song?.level}
+          onChange={handleLevelChange}
+        >
+          <ListboxOption value={levels.unset.value} label={levels.unset.label}>
+            {levels.unset.label}
+          </ListboxOption>
+          <ListboxOption value={levels.easy.value} label={levels.easy.label}>
+            {levels.easy.label} <Tag bg={colors.easy}>Easy</Tag>
+          </ListboxOption>
+          <ListboxOption
+            value={levels.medium.value}
+            label={levels.medium.label}
+          >
+            {levels.medium.label} <Tag bg={colors.medium}>Medium</Tag>
+          </ListboxOption>
+          <ListboxOption value={levels.hard.value} label={levels.hard.label}>
+            {levels.hard.label} <Tag bg={colors.hard}>Hard</Tag>
+          </ListboxOption>
+        </Listbox>
+      </div>
+    )
+  }
+
+  function renderSongRemember() {
+    return (
+      <>
+        {song.hasRemembered ? (
+          <ButtonRemember
+            label="Remembered"
+            bgButton="green"
+            icon={<FaRegGrinWink />}
+          />
+        ) : (
+          <ButtonRemember
+            label="Don't remember"
+            bgButton="brown"
+            icon={<FaRegSadCry />}
+          />
+        )}
+      </>
+    )
+  }
+
   return (
     <div>
       <div
         css={{
           display: 'flex',
           height: '34px',
-          justifyContent: 'space-between',
+          justifyContent: 'space-evenly',
           marginBottom: 10,
         }}
       >
         {renderModalMemoTest()}
+        {renderSongLevel()}
+        {renderSongRemember()}
         <ModalVoiceTest />
       </div>
-      <Video vi={song} autoPlay={0} css={{position: 'sticky', top: '0px'}} />
+      <SongItem vi={song} autoPlay={0} css={{position: 'sticky', top: '0px'}} />
       {lyrics ? (
         <div
           css={{
@@ -472,7 +567,17 @@ function Song() {
             onMouseOver={handleNewWordHover}
           ></p>
         </div>
-      ) : null}
+      ) : (
+        <p
+          css={{
+            textAlign: 'center',
+            color: colors.red,
+            marginTop: 10,
+          }}
+        >
+          Hmm... You might miss the lyrics of this song ^_^
+        </p>
+      )}
     </div>
   )
 }

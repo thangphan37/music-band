@@ -1,7 +1,7 @@
 /**@jsx jsx */
 import {jsx} from '@emotion/react'
 
-function Video({vi, autoPlay = 0, ...otherProps} = {}) {
+function SongItem({vi, autoPlay = 0, ...otherProps} = {}) {
   return (
     <iframe
       width="100%"
@@ -20,4 +20,4 @@ function Video({vi, autoPlay = 0, ...otherProps} = {}) {
   )
 }
 
-export {Video}
+export {SongItem}

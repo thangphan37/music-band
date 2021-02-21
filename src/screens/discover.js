@@ -10,20 +10,22 @@ import {
   Button,
   FormGroup,
   FullFallbackSpinner,
-  ErrorMessage,
 } from 'components/lib'
 import {Modal, ModalOpenButton, ModalContents} from 'components/modal'
-import {Video} from 'components/video'
+import {SongItem} from 'components/song-item'
 import {useQueryClient} from 'react-query'
-import {FaGuitar, FaShare} from 'react-icons/fa'
+import {FaGuitar, FaShare, FaMinusCircle} from 'react-icons/fa'
 import {Link} from 'react-router-dom'
 import {
   useSingers,
   useSinger,
   useSongSearch,
   useSingerUpdate,
+  useHistoryRemove,
 } from 'utils/discover'
 import {ErrorBoundary} from 'react-error-boundary'
+import {NotFound} from 'screens/not-found'
+import {setLevelColor} from 'utils/song'
 import * as colors from 'styles/colors.js'
 import * as mq from 'styles/media-queries.js'
 
@@ -123,24 +125,25 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
 
   const {name} = singer
 
-  const {data: videos, isPreviousData, isFetching} = useSinger(name, page)
+  const {data: singerData, isPreviousData, isFetching} = useSinger(name, page)
   const {data: dataSearched, isFetching: isSearching} = useSongSearch(
     name,
     query,
   )
   const {mutate: update} = useSingerUpdate(name)
+  const {mutate: remove, isLoading: isRemoving} = useHistoryRemove(name)
 
   React.useEffect(() => {
     formRef.current.reset()
   }, [activeIndex])
 
   React.useEffect(() => {
-    if (videos?.hasMore) {
+    if (singerData?.hasMore) {
       queryClient.prefetchQuery(['singer', name, page + 1], () =>
         client(`singer?name=${name}&page=${page + 1}`),
       )
     }
-  }, [videos, page, queryClient, name])
+  }, [singerData, page, queryClient, name])
 
   function handleSearchSong(e) {
     e.preventDefault()
@@ -159,6 +162,14 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
 
     if (lyrics.value) {
       update({song: {lyrics: lyrics.value, _id}})
+    }
+  }
+  function handleHistoryRemove({_id, name}) {
+    remove({_id, name})
+
+    if (query === name) {
+      formRef.current.reset()
+      setQuery('')
     }
   }
 
@@ -184,24 +195,55 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
           display: 'flex',
         }}
       >
-        {videos?.history.map((hi, index) => (
-          <button
-            key={`${hi}-${index}`}
-            onClick={() => setQuery(hi)}
+        {singerData?.history.map((hi, index) => (
+          <div
+            key={`${hi.name}-${hi._id}`}
             css={{
-              fontSize: '0.85em',
-              margin: '2.5px',
-              background: colors.white,
-              color: colors.cadetblue,
-              borderRadius: '3px',
-              border: `solid 1px ${colors.border}`,
-              '&:hover': {
-                border: `solid 1px ${colors.cadetblue}`,
-              },
+              position: 'relative',
             }}
           >
-            {hi}
-          </button>
+            <button
+              onClick={() => setQuery(hi.name)}
+              css={{
+                background: colors.white,
+                color: colors.cadetblue,
+                fontSize: '0.85em',
+                margin: '2.5px',
+                borderRadius: '3px',
+                border: `solid 2px ${
+                  hi.name === query ? colors.cadetblue : colors.border
+                }`,
+                '&:hover': {
+                  border: `solid 2px ${colors.cadetblue}`,
+                },
+              }}
+            >
+              {hi.name}
+            </button>
+            <Button
+              onClick={() => handleHistoryRemove({_id: hi._id, name: hi.name})}
+              css={{
+                display: 'flex',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                position: 'absolute',
+                padding: 1,
+                top: 0,
+                right: 0,
+              }}
+            >
+              {isRemoving && query === hi.name ? (
+                <Spinner css={{width: 8, height: 8}} />
+              ) : (
+                <FaMinusCircle
+                  css={{
+                    width: 8,
+                    height: 8,
+                  }}
+                />
+              )}
+            </Button>
+          </div>
         ))}
       </div>
     )
@@ -219,7 +261,20 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     return (
       <>
         {isSearching ? renderSpinner() : null}
-        {dataSearched?.songs.map((vi, index) => renderSongItem(vi, index))}
+        {dataSearched?.songs.length ? (
+          dataSearched?.songs.map((vi, index) => renderSong(vi, index))
+        ) : (
+          <p
+            css={{
+              textAlign: 'center',
+              width: '80%',
+              margin: '0 auto',
+            }}
+          >
+            Hmmm... I couldn't find any songs with the query "{query}" Please
+            try another.
+          </p>
+        )}
       </>
     )
   }
@@ -239,11 +294,11 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
 
         <NextButton
           onClick={() =>
-            !isPreviousData && videos.hasMore
+            !isPreviousData && singerData.hasMore
               ? setPage((old) => old + 1)
               : void 0
           }
-          disabled={!videos?.hasMore}
+          disabled={!singerData?.hasMore}
         />
       </div>
     )
@@ -252,15 +307,16 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
   function renderModalAddLyrics({_id} = {}) {
     return (
       <Modal>
-        <ModalOpenButton>
-          <FaGuitar
-            css={{
-              '&:hover': {
-                cursor: 'pointer',
-                color: colors.cadetblue,
-              },
-            }}
-          />
+        <ModalOpenButton
+          css={{
+            margin: '0 1rem',
+            '&:hover': {
+              color: colors.cadetblue,
+              cursor: 'pointer',
+            },
+          }}
+        >
+          <FaGuitar />
         </ModalOpenButton>
         <ModalContents
           css={{width: '400px', borderRadius: '3px'}}
@@ -289,7 +345,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     )
   }
 
-  function renderSongItem(vi, index) {
+  function renderSong(vi, index) {
     return (
       <div key={`${vi.song}-${index}`}>
         <div
@@ -300,21 +356,35 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
             marginBottom: '0.5rem',
           }}
         >
-          <Link
-            to={`/song/${singer.name}/${vi._id}`}
+          <div
             css={{
-              color: 'unset',
-              margin: '0 1rem',
-              '&:hover': {
-                color: colors.cadetblue,
-              },
+              color: colors.white,
+              background: setLevelColor(vi.level),
+              padding: '0 5px',
+              margin: 3,
+              borderRadius: 3,
             }}
           >
-            <FaShare />
-          </Link>
-          {!vi.lyrics ? renderModalAddLyrics(vi) : null}
+            {vi.level}
+          </div>
+          {vi.lyrics ? (
+            <Link
+              to={`/song/${singer.name}/${vi._id}`}
+              css={{
+                color: 'unset',
+                margin: '0 1rem',
+                '&:hover': {
+                  color: colors.cadetblue,
+                },
+              }}
+            >
+              <FaShare />
+            </Link>
+          ) : (
+            renderModalAddLyrics(vi)
+          )}
         </div>
-        <Video vi={vi} />
+        <SongItem vi={vi} />
       </div>
     )
   }
@@ -343,9 +413,9 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
           <>
             {renderPrevNextButton()}
             {isFetching ? renderSpinner() : null}
-            {videos?.songs
+            {singerData?.songs
               .filter((f) => f.song.includes(query))
-              .map((vi, index) => renderSongItem(vi, index))}
+              .map((vi, index) => renderSong(vi, index))}
           </>
         )}
       </div>
@@ -382,7 +452,7 @@ function Discover({isOpen}) {
     <div
       css={{
         display: 'grid',
-        gridTemplateColumns: '1fr 3fr',
+        gridTemplateColumns: singers.length ? '1fr 3fr' : 'auto',
         gap: '1.5rem',
         ['@media ' + mq.small]: {
           gridTemplateColumns: 'auto',
@@ -410,7 +480,7 @@ function Discover({isOpen}) {
             />
           </>
         ) : (
-          <ErrorMessage error={{message: 'Please crawl singer.'}} />
+          <NotFound />
         )}
       </ErrorBoundary>
     </div>

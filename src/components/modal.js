@@ -74,12 +74,13 @@ function ModalCloseButton({children, onClick}) {
   })
 }
 
-function ModalOpenButton({children, onClick}) {
+function ModalOpenButton({children, onClick, ...otherProps}) {
   const [, setIsOpen] = useModalContext()
   const open = () => setIsOpen(true)
 
   return React.cloneElement(children, {
     onClick: allFns(open, onClick),
+    ...otherProps,
   })
 }
 

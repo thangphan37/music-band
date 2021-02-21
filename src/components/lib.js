@@ -85,6 +85,10 @@ const buttonVariants = {
     background: colors.secondary,
     color: colors.white,
   },
+  disabled: {
+    background: colors.gray,
+    color: colors.white,
+  },
 }
 
 const Button = styled.button(

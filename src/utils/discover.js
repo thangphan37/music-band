@@ -35,4 +35,18 @@ function useSingerUpdate(name) {
   )
 }
 
-export {useSingers, useSinger, useSongSearch, useSingerUpdate}
+function useHistoryRemove(name) {
+  const queryClient = useQueryClient()
+
+  return useMutation(
+    (data) => client(`singer?name=${name}`, {data, method: 'DELETE'}),
+    {
+      onSuccess: () => {
+        queryClient.refetchQueries('singer')
+        queryClient.refetchQueries('songs')
+      },
+    },
+  )
+}
+
+export {useSingers, useSinger, useSongSearch, useSingerUpdate, useHistoryRemove}
