@@ -12,6 +12,14 @@ import {FaMusic} from 'react-icons/fa'
 import * as mq from 'styles/media-queries'
 import * as colors from 'styles/colors'
 
+const paths = {
+  HOME_PAGE: '/',
+  DISCOVER: '/discover',
+  SONG: '/song',
+  CRAWL: '/crawl',
+  GOODJOB: '/good-job',
+}
+
 function AppRoutes({isOpen}) {
   return (
     <Routes>
@@ -26,13 +34,13 @@ function AppRoutes({isOpen}) {
 }
 
 function calculateBg(pathname) {
-  if (pathname.includes('/discover')) {
+  if (pathname.includes(paths.DISCOVER)) {
     return colors.bgDiscover
-  } else if (pathname.includes('/song')) {
+  } else if (pathname.includes(paths.SONG)) {
     return colors.bgSong
-  } else if (pathname.includes('/crawl')) {
+  } else if (pathname.includes(paths.CRAWL)) {
     return colors.bgCrawl
-  } else if (pathname.includes('/good-job')) {
+  } else if (pathname.includes(paths.GOODJOB)) {
     return colors.bgGoodJob
   }
 }
@@ -41,7 +49,7 @@ function App() {
   const [isOpen, setIsOpen] = React.useState(false)
   const {pathname} = useLocation()
   const bgColor = calculateBg(pathname)
-  const isHomePage = pathname === '/'
+  const isHomePage = pathname === paths.HOME_PAGE
 
   return (
     <>
@@ -56,19 +64,22 @@ function App() {
         css={{
           maxWidth: isHomePage ? 'unset' : '840px',
           margin: isHomePage ? '0' : '3rem auto',
-          ['@media ' + mq.small]: {
+          [mq.small]: {
             width: '100%',
             margin: '0',
             padding: '0.625em',
             backgroundColor: isOpen ? colors.bgSmall : 'unset',
           },
+          [mq.medium]: {
+            maxWidth: '736px',
+          },
         }}
       >
-        {pathname.includes('/discover') ? (
+        {pathname.includes(paths.DISCOVER) ? (
           <div
             css={{
               display: 'none',
-              ['@media ' + mq.small]: {
+              [mq.small]: {
                 display: 'block',
                 marginBottom: '0.5rem',
               },

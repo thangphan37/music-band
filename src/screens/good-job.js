@@ -33,8 +33,8 @@ function GoodJob() {
           },
           'th, td': {
             textAlign: 'left',
-            paddingLeft: 8,
             fontSize: '1.5rem',
+            paddingLeft: 8,
           },
         }}
       >
@@ -83,11 +83,11 @@ function GoodJob() {
     <div>
       <div
         css={{
-          textAlign: 'center',
-          fontSize: '2em',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          textAlign: 'center',
+          fontSize: '2em',
           color: colors.cadetblue,
         }}
       >

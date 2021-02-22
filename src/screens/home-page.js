@@ -3,6 +3,7 @@ import {jsx} from '@emotion/react'
 import {Link} from 'react-router-dom'
 import {FaDownload, FaCcDiscover, FaRegKiss} from 'react-icons/fa'
 import * as colors from 'styles/colors'
+import * as mq from 'styles/media-queries'
 
 function RouterLink({to, icon, routeName, background} = {}) {
   return (
@@ -44,6 +45,9 @@ function HomePage() {
           alignItems: 'center',
           fontSize: '5rem',
           width: '100%',
+          [mq.small]: {
+            fontSize: '3rem',
+          },
         },
       }}
     >

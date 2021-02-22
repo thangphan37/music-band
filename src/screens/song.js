@@ -63,6 +63,7 @@ function Song() {
     // eslint-disable-next-line
     .map((r) => r.replace(/[\！\!\△\※\？\?\、\『\』\「\」\[\]\(\)]/g, ''))
     .filter((r) => r)
+
   const newLyrics = calculateNewWord(vocabulary, lyrics)
   const newWordHash = vocabulary.reduce(
     // eslint-disable-next-line
@@ -125,6 +126,10 @@ function Song() {
 
     newMemoTest[event.target.name] = event.target.value
     setMemoTest(newMemoTest)
+  }
+
+  function handleSongRemember() {
+    update({song: {_id: song._id, hasRemembered: !song.hasRemembered}})
   }
 
   function calculateNewWord(vocabulary, lyrics) {
@@ -245,7 +250,7 @@ function Song() {
           label="Memorization"
           css={{
             width: '1000px',
-            ['@media ' + mq.small]: {
+            [mq.small]: {
               width: '100%',
             },
           }}
@@ -311,130 +316,6 @@ function Song() {
         </ModalContents>
       </Modal>
     )
-  }
-
-  function ModalVoiceTest() {
-    const [isOpenVoice, setIsOpenVoice] = React.useState(false)
-    const [voice, setVoice] = React.useState([])
-    const lineRef = React.useRef(0)
-
-    React.useEffect(() => {
-      if (!window.SpeechRecognition) return
-      const recognition = new window.SpeechRecognition()
-
-      recognition.interimResults = true
-      recognition.lang = 'ja-JP'
-
-      const voiceCopy = [...voice]
-
-      recognition.addEventListener('result', (event) => {
-        const transcript = Array.from(event.results)
-          .map((result) => result[0])
-          .map((result) =>
-            result.transcript
-              .split('')
-              .filter((tr) => tr.trim().length)
-              .join(''),
-          )
-          .join('')
-
-        if (event.results[0].isFinal) {
-          const row = rows[lineRef.current]
-            .split('')
-            .filter((r) => r.trim().length)
-            .join('')
-
-          const isFit = row === transcript
-          const fitCss = isFit
-            ? {background: colors.cadetblue, color: colors.white}
-            : {}
-
-          const rowVoice = (
-            <div css={{display: 'flex'}} key={`row-voice-${lineRef.current}`}>
-              <p css={{fontSize: '1.5rem', ...fitCss}}>{transcript}</p>
-              {row === transcript ? (
-                <FaCheck
-                  css={{
-                    color: colors.cadetblue,
-                    marginLeft: 5,
-                  }}
-                />
-              ) : null}
-            </div>
-          )
-
-          setVoice([...voiceCopy, rowVoice])
-          lineRef.current++
-        }
-      })
-
-      recognition.addEventListener('end', recognition.start)
-      recognition.start()
-
-      return () => {
-        recognition.removeEventListener('end', recognition.start)
-        recognition.stop()
-      }
-    }, [isOpenVoice, voice])
-
-    return (
-      <Modal>
-        <ModalOpenButton
-          onClick={() => {
-            window.SpeechRecognition =
-              window.SpeechRecognition || window.webkitSpeechRecognition
-
-            setIsOpenVoice(true)
-          }}
-        >
-          <Button
-            aria-label="voice test"
-            variant={lyrics ? 'secondary' : 'disabled'}
-            disabled={!lyrics}
-          >
-            <FaMicrophoneAlt />
-          </Button>
-        </ModalOpenButton>
-        <ModalContents
-          label="voice"
-          onCloseProps={() => {
-            window.SpeechRecognition = undefined
-            lineRef.current = 0
-
-            setVoice([])
-            setIsOpenVoice(false)
-          }}
-          css={{
-            width: '1000px',
-            minHeight: '100vh',
-            ['@media ' + mq.small]: {
-              width: '100%',
-            },
-          }}
-        >
-          <h2
-            css={{
-              textAlign: 'center',
-            }}
-          >
-            VOICE TEST
-          </h2>
-          <div
-            css={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            {voice.map((voi) => voi)}
-          </div>
-        </ModalContents>
-      </Modal>
-    )
-  }
-
-  function handleSongRemember() {
-    update({song: {_id: song._id, hasRemembered: !song.hasRemembered}})
   }
 
   function ButtonRemember({label, bgButton, icon}) {
@@ -533,7 +414,7 @@ function Song() {
         {renderModalMemoTest()}
         {renderSongLevel()}
         {renderSongRemember()}
-        <ModalVoiceTest />
+        <ModalVoiceTest rows={rows} lyrics={lyrics} />
       </div>
       <SongItem vi={song} autoPlay={0} css={{position: 'sticky', top: '0px'}} />
       {lyrics ? (
@@ -558,7 +439,7 @@ function Song() {
               '&:hover': {
                 cursor: 'pointer',
               },
-              ['@media ' + mq.small]: {
+              [mq.small]: {
                 fontSize: '1rem',
               },
             }}
@@ -579,6 +460,126 @@ function Song() {
         </p>
       )}
     </div>
+  )
+}
+
+function ModalVoiceTest({rows, lyrics}) {
+  const [isOpenVoice, setIsOpenVoice] = React.useState(false)
+  const [voice, setVoice] = React.useState([])
+  const lineRef = React.useRef(0)
+
+  React.useEffect(() => {
+    if (!window.SpeechRecognition) return
+    const recognition = new window.SpeechRecognition()
+
+    recognition.interimResults = true
+    recognition.lang = 'ja-JP'
+
+    const voiceCopy = [...voice]
+
+    recognition.addEventListener('result', (event) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0])
+        .map((result) =>
+          result.transcript
+            .split('')
+            .filter((tr) => tr.trim().length)
+            .join(''),
+        )
+        .join('')
+
+      if (event.results[0].isFinal) {
+        const row = rows[lineRef.current]
+          .split('')
+          .filter((r) => r.trim().length)
+          .join('')
+
+        const isFit = row === transcript
+        const fitCss = isFit
+          ? {background: colors.cadetblue, color: colors.white}
+          : {}
+
+        const rowVoice = (
+          <div css={{display: 'flex'}} key={`row-voice-${lineRef.current}`}>
+            <p css={{fontSize: '1.5rem', ...fitCss}}>{transcript}</p>
+            {row === transcript ? (
+              <FaCheck
+                css={{
+                  color: colors.cadetblue,
+                  marginLeft: 5,
+                }}
+              />
+            ) : null}
+          </div>
+        )
+
+        setVoice([...voiceCopy, rowVoice])
+        lineRef.current++
+      }
+    })
+
+    recognition.addEventListener('end', recognition.start)
+    recognition.start()
+
+    return () => {
+      recognition.removeEventListener('end', recognition.start)
+      recognition.stop()
+    }
+  }, [isOpenVoice, voice])
+
+  return (
+    <Modal>
+      <ModalOpenButton
+        onClick={() => {
+          window.SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition
+
+          setIsOpenVoice(true)
+        }}
+      >
+        <Button
+          aria-label="voice test"
+          variant={lyrics ? 'secondary' : 'disabled'}
+          disabled={!lyrics}
+        >
+          <FaMicrophoneAlt />
+        </Button>
+      </ModalOpenButton>
+      <ModalContents
+        label="voice"
+        onCloseProps={() => {
+          window.SpeechRecognition = undefined
+          lineRef.current = 0
+
+          setVoice([])
+          setIsOpenVoice(false)
+        }}
+        css={{
+          width: '1000px',
+          minHeight: '100vh',
+          [mq.small]: {
+            width: '100%',
+          },
+        }}
+      >
+        <h2
+          css={{
+            textAlign: 'center',
+          }}
+        >
+          VOICE TEST
+        </h2>
+        <div
+          css={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}
+        >
+          {voice.map((voi) => voi)}
+        </div>
+      </ModalContents>
+    </Modal>
   )
 }
 

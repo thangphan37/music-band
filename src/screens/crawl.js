@@ -7,6 +7,7 @@ import {useMutation, useQueryClient} from 'react-query'
 import {useSingers} from 'utils/discover'
 import {Link} from 'react-router-dom'
 import {FaCcDiscover} from 'react-icons/fa'
+import {useSingerCrawl, useCustomCrawl} from 'utils/crawl'
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
 
@@ -29,9 +30,7 @@ function SingerForm() {
     isSuccess,
     isError,
     error,
-  } = useMutation((data) => client(`crawl`, {data}), {
-    onSuccess: () => queryClient.refetchQueries('singers'),
-  })
+  } = useSingerCrawl()
 
   function handleSubmit(event) {
     event.preventDefault()
@@ -95,9 +94,7 @@ function CustomForm() {
     isSuccess,
     isError,
     error,
-  } = useMutation((data) => client(`singer`, {data}), {
-    onSuccess: () => queryClient.refetchQueries('singers'),
-  })
+  } = useCustomCrawl()
 
   const hasSinger = typeInput === type_inputs.SELECT && data?.singers.length
   const hasInputSinger = typeInput === type_inputs.INPUT
@@ -211,7 +208,7 @@ function Crawl() {
           gridGap: '10px',
           gridTemplateColumns: 'repeat(2, 1fr)',
           justifyContent: 'center',
-          ['@media ' + mq.small]: {
+          [mq.small]: {
             gridTemplateColumns: 'auto',
             justifyContent: 'normal',
           },

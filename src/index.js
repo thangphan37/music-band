@@ -2,7 +2,7 @@
 import {jsx, ThemeProvider} from '@emotion/react'
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './App'
+import App from './app'
 import {BrowserRouter as Router} from 'react-router-dom'
 import {QueryClient, QueryClientProvider} from 'react-query'
 import reportWebVitals from './reportWebVitals'

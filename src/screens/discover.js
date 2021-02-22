@@ -55,10 +55,10 @@ function Singer({onSelectSinger, activeIndex, setPage, setQuery}) {
         position: 'sticky',
         borderRadius: '3px',
         padding: '10px',
-        height: '60vh',
+        height: '500px',
         top: '4px',
         border: `solid 1px ${colors.border}`,
-        ['@media' + mq.small]: {
+        [mq.small]: {
           background: colors.white,
         },
       }}
@@ -75,7 +75,7 @@ function Singer({onSelectSinger, activeIndex, setPage, setQuery}) {
         css={{
           display: 'grid',
           gridGap: '1.5rem',
-          maxHeight: '50vh',
+          maxHeight: '320px',
           overflowY: 'auto',
           padding: 0,
           margin: 0,
@@ -164,6 +164,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
       update({song: {lyrics: lyrics.value, _id}})
     }
   }
+
   function handleHistoryRemove({_id, name}) {
     remove({_id, name})
 
@@ -424,8 +425,8 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
 }
 
 function isMediumLarge() {
-  const {matches: isMatchLarge} = window.matchMedia(mq.large)
-  const {matches: isMatchMedium} = window.matchMedia(mq.medium)
+  const {matches: isMatchLarge} = window.matchMedia(mq.largeSize)
+  const {matches: isMatchMedium} = window.matchMedia(mq.mediumSize)
 
   return isMatchLarge || isMatchMedium
 }
@@ -454,7 +455,7 @@ function Discover({isOpen}) {
         display: 'grid',
         gridTemplateColumns: singers.length ? '1fr 3fr' : 'auto',
         gap: '1.5rem',
-        ['@media ' + mq.small]: {
+        [mq.small]: {
           gridTemplateColumns: 'auto',
         },
       }}
