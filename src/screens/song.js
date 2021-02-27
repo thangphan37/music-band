@@ -525,7 +525,7 @@ function ModalVoiceTest({rows, lyrics}) {
       recognition.removeEventListener('end', recognition.start)
       recognition.stop()
     }
-  }, [isOpenVoice, voice])
+  }, [isOpenVoice, voice, rows])
 
   return (
     <Modal>

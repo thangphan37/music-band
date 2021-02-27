@@ -1,4 +1,4 @@
-import {useQuery, useMutation, useQueryClient} from 'react-query'
+import {useMutation, useQueryClient} from 'react-query'
 import {client} from './api-client'
 
 function useCustomCrawl() {

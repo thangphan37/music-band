@@ -25,4 +25,4 @@ Music-Band has been written by React and Node.js.
 
 Please feel free to refer video demo below ^-^.
 
-[JP](https://youtu.be/_j5mFSjS7Tw)
+[EN](https://youtu.be/dql-NyDSIrY) - [JP](https://youtu.be/le5nl2Q1Qno)

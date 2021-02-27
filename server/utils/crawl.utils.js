@@ -53,7 +53,7 @@ async function crawlSong(song = '', {playlist, singerName, avatar} = {}) {
 
     const options = (
       await page.$$eval(
-        '#dismissable.style-scope.ytd-grid-video-renderer',
+        '#dismissible.style-scope.ytd-grid-video-renderer',
         (options) =>
           options.map((option) => {
             const title = option.querySelector('#video-title')

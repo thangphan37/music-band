@@ -2,8 +2,6 @@
 import * as React from 'react'
 import {jsx} from '@emotion/react'
 import {Button, FormGroup, Input, Spinner, ErrorMessage} from 'components/lib'
-import {client} from 'utils/api-client'
-import {useMutation, useQueryClient} from 'react-query'
 import {useSingers} from 'utils/discover'
 import {Link} from 'react-router-dom'
 import {FaCcDiscover} from 'react-icons/fa'
@@ -23,7 +21,6 @@ function InputCrawl(props) {
 }
 
 function SingerForm() {
-  const queryClient = useQueryClient()
   const {
     mutateAsync: create,
     isLoading,
@@ -85,7 +82,6 @@ const type_inputs = {
 function CustomForm() {
   const [typeInput, setTypeInput] = React.useState(type_inputs.INPUT)
 
-  const queryClient = useQueryClient()
   const {data} = useSingers()
 
   const {
