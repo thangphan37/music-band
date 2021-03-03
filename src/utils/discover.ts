@@ -5,7 +5,7 @@ function useSingers() {
   return useQuery(['singers'], () => client('singers'))
 }
 
-function useSinger(name, page) {
+function useSinger(name: string, page: number) {
   return useQuery({
     queryKey: ['singer', name, page],
     queryFn: () => client(`singer?name=${name}&page=${page}`),
@@ -13,14 +13,14 @@ function useSinger(name, page) {
   })
 }
 
-function useSongSearch(name, query) {
+function useSongSearch(name: string, query: string) {
   return useQuery({
     queryKey: ['songs', name, query],
     queryFn: () => client(`songs?name=${name}&song=${query}`),
   })
 }
 
-function useSingerUpdate(name) {
+function useSingerUpdate(name: string) {
   const queryClient = useQueryClient()
 
   return useMutation(
@@ -35,7 +35,7 @@ function useSingerUpdate(name) {
   )
 }
 
-function useHistoryRemove(name) {
+function useHistoryRemove(name: string) {
   const queryClient = useQueryClient()
 
   return useMutation(

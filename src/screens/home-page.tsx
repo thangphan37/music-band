@@ -1,11 +1,25 @@
 /**@jsx jsx */
+/** @jsxFrag React.Fragment */
+import * as React from 'react'
 import {jsx} from '@emotion/react'
 import {Link} from 'react-router-dom'
 import {FaDownload, FaCcDiscover, FaRegKiss} from 'react-icons/fa'
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
 
-function RouterLink({to, icon, routeName, background} = {}) {
+function RouterLink(
+  {
+    to,
+    icon,
+    routeName,
+    background,
+  }: {
+    to: string
+    icon: JSX.Element
+    routeName: string
+    background: string
+  } = {to: '', icon: <></>, routeName: '', background: ''},
+) {
   return (
     <li
       css={{

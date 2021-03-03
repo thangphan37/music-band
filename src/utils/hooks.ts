@@ -1,19 +1,28 @@
 import * as React from 'react'
 
-function useSafeDispatch(dispatch) {
+function useSafeDispatch(dispatch: React.Dispatch<stateType>) {
   const mounted = React.useRef(true)
 
   React.useEffect(() => {
-    return () => (mounted.current = false)
+    return () => {
+      mounted.current = false
+    }
   }, [])
 
   return React.useCallback(
-    (...args) => (mounted.current ? dispatch(...args) : void 0),
+    (...args) =>
+      mounted.current ? dispatch(({...args} as unknown) as stateType) : void 0,
     [dispatch],
   )
 }
 
-const defaultState = {status: 'idle', data: null, error: null}
+type stateType = {
+  status: string
+  data?: null | any
+  error?: null | string
+}
+
+const defaultState: stateType = {status: 'idle', data: null, error: null}
 function useAsync(initialState = {}) {
   const defaultInitialState = React.useRef({
     ...defaultState,
@@ -21,7 +30,7 @@ function useAsync(initialState = {}) {
   })
 
   const [{status, data, error}, dispatch] = React.useReducer(
-    (s, a) => ({...s, ...a}),
+    (s: stateType, a: stateType) => ({...s, ...a}),
     defaultInitialState.current,
   )
   const safeDispatch = useSafeDispatch(dispatch)
@@ -45,8 +54,8 @@ function useAsync(initialState = {}) {
 
       safeDispatch({status: 'loading'})
       return promise.then(
-        (data) => setData(data),
-        (error) => {
+        (data: any) => setData(data),
+        (error: string) => {
           setError(error)
 
           throw new Error(error)

@@ -6,10 +6,11 @@ import {useSingers} from 'utils/discover'
 import {Link} from 'react-router-dom'
 import {FaCcDiscover} from 'react-icons/fa'
 import {useSingerCrawl, useCustomCrawl} from 'utils/crawl'
+import type {Singer} from 'type'
 import * as colors from 'styles/colors'
 import * as mq from 'styles/media-queries'
 
-function InputCrawl(props) {
+function InputCrawl(props: {id: string}) {
   return (
     <Input
       {...props}
@@ -29,15 +30,18 @@ function SingerForm() {
     error,
   } = useSingerCrawl()
 
-  function handleSubmit(event) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const {singer, playlist, avatar} = event.target.elements
+    const {singer, playlist, avatar} = (event.target as typeof event.target & {
+      elements: {[k: string]: HTMLInputElement}
+    }).elements
 
-    create({
+    const payload = {
       singerName: singer.value,
       playlist: playlist.value,
       avatar: avatar.value,
-    })
+    }
+    create((payload as unknown) as void)
   }
 
   return (
@@ -63,13 +67,13 @@ function SingerForm() {
         <InputCrawl id="playlist" />
       </FormGroup>
       <div>
-        <Button>
+        <Button variant="primary">
           Crawl
           {isLoading ? <Spinner css={{marginLeft: '5px'}} /> : null}
         </Button>
       </div>
       {isSuccess ? <p css={{color: colors.cadetblue}}>Success!</p> : null}
-      {isError ? <ErrorMessage error={error} /> : null}
+      {isError ? <ErrorMessage error={error as {message: string}} /> : null}
     </form>
   )
 }
@@ -95,20 +99,29 @@ function CustomForm() {
   const hasSinger = typeInput === type_inputs.SELECT && data?.singers.length
   const hasInputSinger = typeInput === type_inputs.INPUT
 
-  function handleSubmitCustom(event) {
+  function handleSubmitCustom(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const {singerName, avatarCustom, songName, songHref} = event.target.elements
+    const {
+      singerName,
+      avatarCustom,
+      songName,
+      songHref,
+    } = (event.target as typeof event.target & {
+      elements: {[k: string]: HTMLInputElement}
+    }).elements
     const payload = {
       singerName: singerName.value,
       songName: songName.value,
       songHref: songHref.value,
+    } as {
+      [anythingWeWant: string]: string
     }
 
     if (hasInputSinger) {
       payload.avatar = avatarCustom.value
     }
 
-    createCustom(payload)
+    createCustom((payload as unknown) as void)
   }
 
   function handleChangeTypeInput() {
@@ -146,7 +159,7 @@ function CustomForm() {
 
         {hasSinger ? (
           <select id="singerName">
-            {data?.singers.map((si, i) => (
+            {data?.singers.map((si: Singer, i: number) => (
               <option key={`${si}-${i}`}>{si.name}</option>
             ))}
           </select>
@@ -175,7 +188,7 @@ function CustomForm() {
         </Button>
       </div>
       {isSuccess ? <p css={{color: colors.cadetblue}}>Success!</p> : null}
-      {isError ? <ErrorMessage error={error} /> : null}
+      {isError ? <ErrorMessage error={error as {message: string}} /> : null}
     </form>
   )
 }

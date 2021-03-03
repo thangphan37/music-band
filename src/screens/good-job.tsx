@@ -7,6 +7,7 @@ import {formatDate} from 'utils/format-date'
 import {Spinner} from 'components/lib'
 import {useNavigate} from 'react-router-dom'
 import {setLevelColor} from 'utils/song'
+import type {Song} from 'type'
 import * as colors from 'styles/colors'
 
 function GoodJob() {
@@ -48,7 +49,16 @@ function GoodJob() {
         </thead>
         <tbody>
           {data?.songs.map(
-            ({song, rememberedDate, level, singer, _id}, index) => (
+            (
+              {
+                song,
+                rememberedDate,
+                level,
+                singer,
+                _id,
+              }: Song & {singer: string},
+              index: number,
+            ) => (
               <tr
                 onClick={() => {
                   navigate(`/song/${singer}/${_id}`)

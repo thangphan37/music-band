@@ -43,7 +43,7 @@ function FullFallbackSpinner() {
   )
 }
 
-function FormGroup(props) {
+function FormGroup(props: {children: JSX.Element[]; [k: string]: any}) {
   return (
     <div
       css={{
@@ -55,7 +55,7 @@ function FormGroup(props) {
   )
 }
 
-function ErrorMessage({error}) {
+function ErrorMessage({error}: {error: {message: string}}) {
   return (
     <div
       role="alert"
@@ -68,7 +68,7 @@ function ErrorMessage({error}) {
   )
 }
 
-const pageButton = ({disabled}) => ({
+const pageButton = ({disabled}: {disabled: boolean}) => ({
   color: disabled ? colors.wheat : 'unset',
   fontSize: '5rem',
   '&:hover': {
@@ -97,7 +97,8 @@ const Button = styled.button(
     padding: '5px 10px',
     borderRadius: '3px',
   },
-  ({variant = 'primary'}) => buttonVariants[variant],
+  ({variant = 'primary'}: {variant: 'primary' | 'secondary' | 'disabled'}) =>
+    buttonVariants[variant],
 )
 
 const CircleButton = styled(Button)({

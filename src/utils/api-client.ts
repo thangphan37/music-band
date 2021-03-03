@@ -1,11 +1,21 @@
 const apiURL = process.env.REACT_APP_MUSIC_API
 
-function client(endpoint, {headers, data, ...customConfig} = {}) {
+type configType = {
+  headers?: {[k: string]: any}
+  data?: any
+  [anythingWeWant: string]: any
+}
+
+function client(
+  endpoint: string,
+  {headers: customHeaders, data, ...customConfig}: configType = {},
+) {
   const config = {
     method: data ? 'POST' : 'GET',
     body: data ? JSON.stringify(data) : undefined,
     headers: {
       'Content-Type': 'application/json',
+      ...customHeaders,
     },
     ...customConfig,
   }

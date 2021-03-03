@@ -1,4 +1,5 @@
 /**@jsx jsx */
+/** @jsxFrag React.Fragment */
 import * as React from 'react'
 import {jsx} from '@emotion/react'
 import {client} from 'utils/api-client'
@@ -26,10 +27,11 @@ import {
 import {ErrorBoundary} from 'react-error-boundary'
 import {NotFound} from 'screens/not-found'
 import {setLevelColor} from 'utils/song'
-import * as colors from 'styles/colors.js'
-import * as mq from 'styles/media-queries.js'
+import type {Singer as SingerType, Song, History, EventElements} from 'type'
+import * as colors from 'styles/colors'
+import * as mq from 'styles/media-queries'
 
-function ErrorFallback({error, resetErrorBoundary}) {
+function ErrorFallback({error}: {error: {message: string}}) {
   return (
     <div role="alert">
       <p>Something went wrong:</p>
@@ -38,12 +40,22 @@ function ErrorFallback({error, resetErrorBoundary}) {
   )
 }
 
-function Singer({onSelectSinger, activeIndex, setPage, setQuery}) {
+function Singer({
+  onSelectSinger,
+  activeIndex,
+  setPage,
+  setQuery,
+}: {
+  onSelectSinger: React.Dispatch<number>
+  activeIndex: number
+  setPage: React.Dispatch<number>
+  setQuery: React.Dispatch<string>
+}) {
   const {
     data: {singers},
   } = useSingers()
 
-  function handleChangeSinger(index) {
+  function handleChangeSinger(index: number) {
     onSelectSinger(index)
     setPage(0)
     setQuery('')
@@ -81,9 +93,9 @@ function Singer({onSelectSinger, activeIndex, setPage, setQuery}) {
           margin: 0,
         }}
       >
-        {singers.map((si, index) => (
+        {singers.map((si: SingerType, index: number) => (
           <li
-            key={`${si.id}-${index}`}
+            key={`${si._id}-${index}`}
             css={{
               display: 'grid',
               gridTemplateColumns: 'auto 1fr',
@@ -117,9 +129,23 @@ function Singer({onSelectSinger, activeIndex, setPage, setQuery}) {
   )
 }
 
-function Main({singers, activeIndex, page, setPage, query, setQuery}) {
+function Main({
+  singers,
+  activeIndex,
+  page,
+  setPage,
+  query,
+  setQuery,
+}: {
+  singers: Array<SingerType>
+  activeIndex: number
+  page: number
+  setPage: React.Dispatch<number | ((arg: number) => number)>
+  query: string
+  setQuery: React.Dispatch<string>
+}) {
   const queryClient = useQueryClient()
-  const formRef = React.useRef()
+  const formRef = React.useRef<HTMLFormElement>(null!)
 
   const singer = singers[activeIndex]
 
@@ -145,28 +171,31 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     }
   }, [singerData, page, queryClient, name])
 
-  function handleSearchSong(e) {
+  function handleSearchSong(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const {song} = e.target.elements
+    const {song} = (e.target as typeof e.target & EventElements).elements
 
     setQuery(song.value)
 
     if (song.value) {
-      update({history: song.value})
+      update(({history: song.value} as unknown) as void)
     }
   }
 
-  function handleSubmitLyrics(e, _id) {
+  function handleSubmitLyrics(
+    e: React.FormEvent<HTMLFormElement>,
+    _id: string,
+  ) {
     e.preventDefault()
-    const {lyrics} = e.target.elements
+    const {lyrics} = (e.target as typeof e.target & EventElements).elements
 
     if (lyrics.value) {
-      update({song: {lyrics: lyrics.value, _id}})
+      update(({song: {lyrics: lyrics.value, _id}} as unknown) as void)
     }
   }
 
-  function handleHistoryRemove({_id, name}) {
-    remove({_id, name})
+  function handleHistoryRemove({_id, name}: {_id: string; name: string}) {
+    remove(({_id, name} as unknown) as void)
 
     if (query === name) {
       formRef.current.reset()
@@ -196,7 +225,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
           display: 'flex',
         }}
       >
-        {singerData?.history.map((hi, index) => (
+        {singerData?.history.map((hi: History, index: number) => (
           <div
             key={`${hi.name}-${hi._id}`}
             css={{
@@ -222,6 +251,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
               {hi.name}
             </button>
             <Button
+              variant="primary"
               onClick={() => handleHistoryRemove({_id: hi._id, name: hi.name})}
               css={{
                 display: 'flex',
@@ -263,7 +293,9 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
       <>
         {isSearching ? renderSpinner() : null}
         {dataSearched?.songs.length ? (
-          dataSearched?.songs.map((vi, index) => renderSong(vi, index))
+          dataSearched?.songs.map((so: Song, index: number) =>
+            renderSong(so, index),
+          )
         ) : (
           <p
             css={{
@@ -289,14 +321,14 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
         }}
       >
         <PrevButton
-          onClick={() => setPage((old) => Math.max(old - 1, 0))}
+          onClick={() => setPage((old: number) => Math.max(old - 1, 0))}
           disabled={page === 0}
         />
 
         <NextButton
           onClick={() =>
             !isPreviousData && singerData.hasMore
-              ? setPage((old) => old + 1)
+              ? setPage((old: number) => old + 1)
               : void 0
           }
           disabled={!singerData?.hasMore}
@@ -305,7 +337,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     )
   }
 
-  function renderModalAddLyrics({_id} = {}) {
+  function renderModalAddLyrics({_id}: {_id: string} = {_id: ''}) {
     return (
       <Modal>
         <ModalOpenButton
@@ -346,9 +378,9 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     )
   }
 
-  function renderSong(vi, index) {
+  function renderSong(itemSong: Song, index: number) {
     return (
-      <div key={`${vi.song}-${index}`}>
+      <div key={`${itemSong.song}-${index}`}>
         <div
           css={{
             display: 'flex',
@@ -360,17 +392,17 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
           <div
             css={{
               color: colors.white,
-              background: setLevelColor(vi.level),
+              background: setLevelColor(itemSong.level),
               padding: '0 5px',
               margin: 3,
               borderRadius: 3,
             }}
           >
-            {vi.level}
+            {itemSong.level}
           </div>
-          {vi.lyrics ? (
+          {itemSong.lyrics ? (
             <Link
-              to={`/song/${singer.name}/${vi._id}`}
+              to={`/song/${singer.name}/${itemSong._id}`}
               css={{
                 color: 'unset',
                 margin: '0 1rem',
@@ -382,10 +414,10 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
               <FaShare />
             </Link>
           ) : (
-            renderModalAddLyrics(vi)
+            renderModalAddLyrics(itemSong)
           )}
         </div>
-        <SongItem vi={vi} />
+        <SongItem itemSong={itemSong} />
       </div>
     )
   }
@@ -415,8 +447,8 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
             {renderPrevNextButton()}
             {isFetching ? renderSpinner() : null}
             {singerData?.songs
-              .filter((f) => f.song.includes(query))
-              .map((vi, index) => renderSong(vi, index))}
+              .filter((f: Song) => f.song.includes(query))
+              .map((so: Song, index: number) => renderSong(so, index))}
           </>
         )}
       </div>
@@ -431,7 +463,7 @@ function isMediumLarge() {
   return isMatchLarge || isMatchMedium
 }
 
-function Discover({isOpen}) {
+function Discover({isOpen}: {isOpen: boolean}) {
   const [activeIndex, setActiveIndex] = React.useState(0)
   const [page, setPage] = React.useState(0)
   const [query, setQuery] = React.useState('')
@@ -439,7 +471,7 @@ function Discover({isOpen}) {
   const {data, isLoading} = useSingers()
   const isMatch = isMediumLarge()
 
-  function handleActiveSinger(a) {
+  function handleActiveSinger(a: number) {
     setActiveIndex(a)
   }
 

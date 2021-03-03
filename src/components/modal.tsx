@@ -5,13 +5,19 @@ import {Dialog} from '@reach/dialog'
 import {CircleButton} from 'components/lib'
 import VisuallyHidden from '@reach/visually-hidden'
 
-const allFns = (...fns) => (...args) => fns.forEach((fn) => fn && fn(...args))
-const ModalContext = React.createContext()
+type ModalContextType = [isOpen: boolean, setIsOpen: React.Dispatch<boolean>]
 
-function Modal({children}) {
+const allFns = (
+  ...fns: Array<
+    (void | undefined) | ((event?: React.MouseEvent<HTMLElement>) => void)
+  >
+) => (...args: any[]) => fns.forEach((fn) => fn && fn(...args))
+const ModalContext = React.createContext<ModalContextType | null>(null)
+
+function Modal({children}: {children: Array<JSX.Element>}) {
   const [isOpen, setIsOpen] = React.useState(false)
 
-  const value = [isOpen, setIsOpen]
+  const value: ModalContextType = [isOpen, setIsOpen]
   return <ModalContext.Provider value={value}>{children}</ModalContext.Provider>
 }
 
@@ -31,6 +37,12 @@ function ModalContents({
   onCloseProps,
   isHideButtonProps = false,
   ...props
+}: {
+  children: Array<JSX.Element>
+  label: string
+  onCloseProps?: () => void | undefined
+  isHideButtonProps?: boolean
+  [otherProps: string]: any
 }) {
   const [isOpen, setIsOpen] = useModalContext()
   const close = () => setIsOpen(false)
@@ -45,6 +57,7 @@ function ModalContents({
       {!isHideButtonProps && (
         <div css={{display: 'flex', justifyContent: 'flex-end'}}>
           <CircleButton
+            variant="primary"
             className="close-button"
             onClick={allFns(close, onCloseProps)}
           >
@@ -65,7 +78,13 @@ function ModalContents({
   )
 }
 
-function ModalCloseButton({children, onClick}) {
+function ModalCloseButton({
+  children,
+  onClick,
+}: {
+  children: JSX.Element
+  onClick?: ((event?: React.MouseEvent<HTMLElement>) => void) | undefined
+}) {
   const [, setIsOpen] = useModalContext()
   const close = () => setIsOpen(false)
 
@@ -74,7 +93,15 @@ function ModalCloseButton({children, onClick}) {
   })
 }
 
-function ModalOpenButton({children, onClick, ...otherProps}) {
+function ModalOpenButton({
+  children,
+  onClick,
+  ...otherProps
+}: {
+  children: JSX.Element
+  onClick?: ((event?: React.MouseEvent<HTMLElement>) => void) | undefined
+  [otherProps: string]: any
+}) {
   const [, setIsOpen] = useModalContext()
   const open = () => setIsOpen(true)
 

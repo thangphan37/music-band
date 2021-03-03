@@ -1,4 +1,5 @@
 /**@jsx jsx */
+/** @jsxFrag React.Fragment */
 import {jsx} from '@emotion/react'
 import * as React from 'react'
 import {SongItem} from 'components/song-item'
@@ -24,21 +25,32 @@ import {NotFound} from 'screens/not-found'
 import {Modal, ModalOpenButton, ModalContents} from 'components/modal'
 import {Listbox, ListboxOption} from '@reach/listbox'
 import {useSong, useSongUpdate, levels, setLevelColor} from 'utils/song'
+import type {EventElements, Vocabulary} from 'type'
 import VisuallyHidden from '@reach/visually-hidden'
 import Tooltip from '@reach/tooltip'
 import * as mq from 'styles/media-queries'
 import * as colors from 'styles/colors'
 
+type Mean = {
+  en: string
+  vi: string
+  jp: string
+  top?: number
+  left?: number
+}
+
 function Song() {
   const {singerName, songId} = useParams()
 
-  const [newWord, setNewWord] = React.useState(null)
+  const [newWord, setNewWord] = React.useState(null!)
   const [isOpen, setIsOpen] = React.useState(false)
-  const [mean, setMean] = React.useState(null)
-  const [memoTest, setMemoTest] = React.useState({})
+  const [mean, setMean] = React.useState<Mean>(null!)
+  const [memoTest, setMemoTest] = React.useState<{
+    [eachSentence: string]: string
+  }>({})
 
-  const buttonRef = React.useRef(null)
-  const lyricRef = React.useRef(null)
+  const buttonRef = React.useRef<HTMLButtonElement>(null!)
+  const lyricRef = React.useRef<HTMLDivElement>(null!)
 
   const {data, isLoading} = useSong(singerName, songId)
   const {mutate: update, isLoading: isUpdating, isError, error} = useSongUpdate(
@@ -60,23 +72,38 @@ function Song() {
 
   const rows = lyrics
     .split('\n')
-    // eslint-disable-next-line
-    .map((r) => r.replace(/[\！\!\△\※\？\?\、\『\』\「\」\[\]\(\)]/g, ''))
-    .filter((r) => r)
+    .map((r: string) =>
+      // eslint-disable-next-line
+      r.replace(/[\！\!\△\※\？\?\、\『\』\「\」\[\]\(\)]/g, ''),
+    )
+    .filter((r: string) => r)
 
   const newLyrics = calculateNewWord(vocabulary, lyrics)
   const newWordHash = vocabulary.reduce(
-    // eslint-disable-next-line
-    (acc, vo) => ((acc[vo.jp] = vo), acc),
+    (acc: {[k: string]: Vocabulary}, vo: Vocabulary) => (
+      // eslint-disable-next-line
+      (acc[vo.jp] = vo), acc
+    ),
     {},
   )
 
   function handleNewWord() {
     if (window.getSelection) {
-      let {anchorNode, baseOffset, focusOffset} = window.getSelection()
+      let {
+        anchorNode,
+        baseOffset,
+        focusOffset,
+      } = (window.getSelection() as unknown) as {
+        anchorNode: Node & {data: string}
+        baseOffset: number
+        focusOffset: number
+      }
 
-      if (anchorNode.parentElement.tagName === 'SPAN') {
-        setNewWord(anchorNode.parentElement.textContent)
+      if ((anchorNode.parentElement as HTMLElement).tagName === 'SPAN') {
+        setNewWord(
+          ((anchorNode.parentElement as HTMLElement)
+            .textContent as unknown) as never,
+        )
         return
       }
 
@@ -84,31 +111,39 @@ function Song() {
         ;[baseOffset, focusOffset] = [focusOffset, baseOffset]
       }
 
-      setNewWord(anchorNode.data.slice(baseOffset, focusOffset))
+      setNewWord(
+        (anchorNode.data.slice(baseOffset, focusOffset) as unknown) as never,
+      )
     }
   }
 
-  function handleLyricMouseUp(event) {
+  function handleLyricMouseUp(event: React.MouseEvent<HTMLElement>) {
     const top = event.pageY - lyricRef.current.offsetTop - 20
-    buttonRef.current.style = `top: ${top < 10 ? 10 : top}px`
+
+    buttonRef.current.style.top = `${top < 10 ? 10 : top}px`
 
     handleNewWord()
   }
 
-  function handleSubmit(event) {
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const {en, vi} = event.target.elements
+    const {en, vi} = (event.target as typeof event.target &
+      EventElements).elements
     const vocabulary = {jp: newWord, en: en.value, vi: vi.value}
 
-    update({song: {_id: songId, vocabulary}})
+    update(({song: {_id: songId, vocabulary}} as unknown) as void)
   }
 
-  function handleLevelChange(level) {
-    updateLevel({song: {_id: song._id, level}})
+  function handleLevelChange(level: string) {
+    updateLevel(({song: {_id: song._id, level}} as unknown) as void)
   }
 
-  function handleNewWordHover(event) {
-    const meanHover = newWordHash[event.target.textContent]
+  function handleNewWordHover(event: React.MouseEvent<HTMLElement>) {
+    const meanHover =
+      newWordHash[
+        (event.target as typeof event.target & {textContent: string})
+          .textContent
+      ]
 
     if (meanHover) {
       const top = event.pageY - lyricRef.current.offsetTop - 100
@@ -121,18 +156,19 @@ function Song() {
     }
   }
 
-  function handleMemoTestChange(event) {
-    const newMemoTest = {...memoTest}
-
+  function handleMemoTestChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const newMemoTest = {...memoTest} as {[wordWeDontKnow: string]: string}
     newMemoTest[event.target.name] = event.target.value
     setMemoTest(newMemoTest)
   }
 
   function handleSongRemember() {
-    update({song: {_id: song._id, hasRemembered: !song.hasRemembered}})
+    update(({
+      song: {_id: song._id, hasRemembered: !song.hasRemembered},
+    } as unknown) as void)
   }
 
-  function calculateNewWord(vocabulary, lyrics) {
+  function calculateNewWord(vocabulary: Array<Vocabulary>, lyrics: string) {
     let result = lyrics
 
     vocabulary.forEach((vc) => {
@@ -177,6 +213,7 @@ function Song() {
       <Modal>
         <ModalOpenButton>
           <CircleButton
+            variant="primary"
             css={{
               position: 'absolute',
               left: '20px',
@@ -187,7 +224,7 @@ function Song() {
               },
             }}
             ref={buttonRef}
-            disabled={!newWord?.trim()}
+            disabled={!(newWord as string)?.trim()}
           >
             <FaPlusCircle />
           </CircleButton>
@@ -222,12 +259,14 @@ function Song() {
               />
             </FormGroup>
             <div>
-              <Button type="submit">
+              <Button type="submit" variant="primary">
                 Submit{' '}
                 {isUpdating ? <Spinner css={{marginLeft: '5px'}} /> : null}
               </Button>
             </div>
-            {isError ? <ErrorMessage error={error} /> : null}
+            {isError ? (
+              <ErrorMessage error={error as {message: string}} />
+            ) : null}
           </form>
         </ModalContents>
       </Modal>
@@ -236,99 +275,115 @@ function Song() {
 
   function renderModalMemoTest() {
     return (
-      <Modal>
-        <ModalOpenButton onClick={() => setMemoTest({})}>
-          <Button
-            aria-label="memorization test"
-            variant={lyrics ? 'primary' : 'disabled'}
-            disabled={!lyrics}
-          >
-            <FaBrain />
-          </Button>
-        </ModalOpenButton>
-        <ModalContents
-          label="Memorization"
-          css={{
-            width: '1000px',
-            [mq.small]: {
-              width: '100%',
-            },
-          }}
-        >
-          <h2 css={{textAlign: 'center', fontSize: '2rem'}}>
-            Memorization Test
-          </h2>
-          <form
+      <>
+        <Modal>
+          <ModalOpenButton onClick={() => setMemoTest({})}>
+            <Button
+              aria-label="memorization test"
+              variant={lyrics ? 'primary' : 'disabled'}
+              disabled={!lyrics}
+            >
+              <FaBrain />
+            </Button>
+          </ModalOpenButton>
+          <ModalContents
+            label="Memorization"
             css={{
-              display: 'flex',
-              flexDirection: 'column',
+              width: '1000px',
+              [mq.small]: {
+                width: '100%',
+              },
             }}
-            autoComplete={'off'}
           >
-            {rows.map((row, rowIndex) => {
-              const cols = row.split('').filter((r) => r.trim().length)
-              const colTotal = cols.length
-              const letterSpacing = (916 - colTotal * 16) / (colTotal - 1)
-              const name = `memo-${rowIndex}`
-              const isFit = memoTest[name] === cols.join('')
-              const fitCss = isFit
-                ? {
-                    background: colors.cadetblue,
-                    color: colors.white,
-                    fontWeight: 'bold',
-                  }
-                : {}
+            <h2 css={{textAlign: 'center', fontSize: '2rem'}}>
+              Memorization Test
+            </h2>
+            <form
+              css={{
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              autoComplete={'off'}
+            >
+              {rows.map((row: string, rowIndex: number) => {
+                const cols = row
+                  .split('')
+                  .filter((r: string) => r.trim().length)
+                const colTotal: number = cols.length
+                const letterSpacing = (916 - colTotal * 16) / (colTotal - 1)
+                const name = `memo-${rowIndex}`
+                const isFit = memoTest[name] === cols.join('')
+                const fitCss: {[l: string]: string} = isFit
+                  ? {
+                      background: colors.cadetblue,
+                      color: colors.white,
+                      fontWeight: 'bold',
+                    }
+                  : {}
 
-              return (
-                <div
-                  css={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    marginTop: '5px',
-                    position: 'relative',
-                  }}
-                  key={`${row}-${rowIndex}`}
-                >
-                  <Input
-                    maxLength={colTotal}
-                    length={colTotal}
+                return (
+                  <div
                     css={{
-                      letterSpacing: `${letterSpacing}px`,
-                      ...fitCss,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      marginTop: '5px',
+                      position: 'relative',
                     }}
-                    name={name}
-                    onChange={handleMemoTestChange}
-                  />
-
-                  {isFit ? (
-                    <FaCheck
+                    key={`${row}-${rowIndex}`}
+                  >
+                    <Input
+                      maxLength={colTotal}
+                      // length={colTotal}
                       css={{
-                        position: 'absolute',
-                        right: -20,
-                        color: colors.cadetblue,
+                        letterSpacing: `${letterSpacing}px`,
+                        ...fitCss,
                       }}
+                      name={name}
+                      onChange={handleMemoTestChange}
                     />
-                  ) : null}
-                </div>
-              )
-            })}
-          </form>
-        </ModalContents>
-      </Modal>
+
+                    {isFit ? (
+                      <FaCheck
+                        css={{
+                          position: 'absolute',
+                          right: -20,
+                          color: colors.cadetblue,
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                )
+              })}
+            </form>
+          </ModalContents>
+        </Modal>
+      </>
     )
   }
 
-  function ButtonRemember({label, bgButton, icon}) {
+  function ButtonRemember({
+    label,
+    bgButton,
+    icon,
+  }: {
+    label: string
+    bgButton: string
+    icon: JSX.Element
+  }) {
     return (
       <Tooltip label={label}>
-        <Button css={{background: bgButton}} onClick={handleSongRemember}>
+        <Button
+          css={{background: bgButton}}
+          onClick={handleSongRemember}
+          variant="primary"
+        >
           {isUpdating ? <Spinner /> : icon}
         </Button>
       </Tooltip>
     )
   }
 
-  function Tag({bg, ...otherProps}) {
+  function Tag({bg, ...otherProps}: {bg: string; [otherProps: string]: any}) {
     return (
       <span
         css={{
@@ -416,7 +471,11 @@ function Song() {
         {renderSongRemember()}
         <ModalVoiceTest rows={rows} lyrics={lyrics} />
       </div>
-      <SongItem vi={song} autoPlay={0} css={{position: 'sticky', top: '0px'}} />
+      <SongItem
+        itemSong={song}
+        autoPlay={0}
+        css={{position: 'sticky', top: '0px'}}
+      />
       {lyrics ? (
         <div
           css={{
@@ -463,9 +522,9 @@ function Song() {
   )
 }
 
-function ModalVoiceTest({rows, lyrics}) {
+function ModalVoiceTest({rows, lyrics}: {rows: Array<string>; lyrics: string}) {
   const [isOpenVoice, setIsOpenVoice] = React.useState(false)
-  const [voice, setVoice] = React.useState([])
+  const [voice, setVoice] = React.useState<Array<JSX.Element>>([])
   const lineRef = React.useRef(0)
 
   React.useEffect(() => {
@@ -532,7 +591,9 @@ function ModalVoiceTest({rows, lyrics}) {
       <ModalOpenButton
         onClick={() => {
           window.SpeechRecognition =
-            window.SpeechRecognition || window.webkitSpeechRecognition
+            window.SpeechRecognition ||
+            (window as typeof window & {webkitSpeechRecognition: any})
+              .webkitSpeechRecognition
 
           setIsOpenVoice(true)
         }}
@@ -548,7 +609,7 @@ function ModalVoiceTest({rows, lyrics}) {
       <ModalContents
         label="voice"
         onCloseProps={() => {
-          window.SpeechRecognition = undefined
+          // window.SpeechRecognition = undefined
           lineRef.current = 0
 
           setVoice([])

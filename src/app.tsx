@@ -1,4 +1,5 @@
 /**@jsx jsx */
+/** @jsxFrag React.Fragment */
 import {jsx, Global} from '@emotion/react'
 import * as React from 'react'
 import {Routes, Route, useLocation} from 'react-router-dom'
@@ -20,7 +21,7 @@ const paths = {
   GOODJOB: '/good-job',
 }
 
-function AppRoutes({isOpen}) {
+function AppRoutes({isOpen}: {isOpen: boolean}) {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
@@ -33,7 +34,7 @@ function AppRoutes({isOpen}) {
   )
 }
 
-function calculateBg(pathname) {
+function calculateBg(pathname: string) {
   if (pathname.includes(paths.DISCOVER)) {
     return colors.bgDiscover
   } else if (pathname.includes(paths.SONG)) {
