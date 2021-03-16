@@ -20,7 +20,7 @@ const spinner = keyframes({
 })
 
 const Spinner = styled(FaSpinner)({
-  animation: `${spinner} 0.6s linear infinite`,
+  animation: `${spinner} 1s linear infinite`,
 })
 
 Spinner.defaultProps = {
