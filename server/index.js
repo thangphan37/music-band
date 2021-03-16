@@ -5,7 +5,12 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const port = 5000
 
-mongoose.connect('mongodb://localhost:27017/music-band', {
+require('dotenv').config()
+
+//connect mongodb in local enviroment
+// mongoose.connect('mongodb://localhost:27017/music-band', {
+
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })

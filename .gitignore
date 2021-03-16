@@ -7,7 +7,7 @@
 
 /server/package-lock*
 /server/node_modules
-
+/server/.env
 # testing
 /coverage
 
