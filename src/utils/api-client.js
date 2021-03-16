@@ -1,4 +1,4 @@
-// const apiURL = process.env.REACT_APP_MUSIC_API
+const apiURL = process.env.REACT_APP_MUSIC_API
 
 function client(endpoint, {headers, data, ...customConfig} = {}) {
   const config = {
@@ -10,15 +10,17 @@ function client(endpoint, {headers, data, ...customConfig} = {}) {
     ...customConfig,
   }
 
-  return window.fetch(`/${endpoint}`, config).then(async (response) => {
-    const data = await response.json()
+  return window
+    .fetch(`${apiURL}/${endpoint}`, config)
+    .then(async (response) => {
+      const data = await response.json()
 
-    if (response.ok) {
-      return data
-    }
+      if (response.ok) {
+        return data
+      }
 
-    return Promise.reject(data)
-  })
+      return Promise.reject(data)
+    })
 }
 
 export {client}
