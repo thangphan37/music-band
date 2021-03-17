@@ -122,7 +122,6 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
   const formRef = React.useRef()
 
   const singer = singers[activeIndex]
-
   const {name} = singer
 
   const {data: singerData, isPreviousData, isFetching} = useSinger(name, page)
@@ -131,7 +130,6 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     query,
   )
   const {mutate: update} = useSingerUpdate(name)
-  const {mutate: remove, isLoading: isRemoving} = useHistoryRemove(name)
 
   React.useEffect(() => {
     formRef.current.reset()
@@ -165,15 +163,6 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     }
   }
 
-  function handleHistoryRemove({_id, name}) {
-    remove({_id, name})
-
-    if (query === name) {
-      formRef.current.reset()
-      setQuery('')
-    }
-  }
-
   function renderFormDiscover() {
     return (
       <form onSubmit={handleSearchSong} ref={formRef}>
@@ -189,6 +178,60 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     )
   }
 
+  function HistoryItem({history: {_id, name: historyName}}) {
+    const {mutate: remove, isLoading: isRemoving} = useHistoryRemove(name)
+
+    return (
+      <div
+        css={{
+          position: 'relative',
+        }}
+      >
+        <button
+          onClick={() => setQuery(historyName)}
+          css={{
+            background: colors.white,
+            color: colors.cadetblue,
+            fontSize: '0.85em',
+            margin: '2.5px',
+            borderRadius: '3px',
+            border: `solid 2px ${
+              historyName === query ? colors.cadetblue : colors.border
+            }`,
+            '&:hover': {
+              border: `solid 2px ${colors.cadetblue}`,
+            },
+          }}
+        >
+          {historyName}
+        </button>
+        <Button
+          onClick={() => remove({_id, name: historyName})}
+          css={{
+            display: 'flex',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            position: 'absolute',
+            padding: 1,
+            top: 0,
+            right: 0,
+          }}
+        >
+          {isRemoving ? (
+            <Spinner css={{width: 8, height: 8}} />
+          ) : (
+            <FaMinusCircle
+              css={{
+                width: 8,
+                height: 8,
+              }}
+            />
+          )}
+        </Button>
+      </div>
+    )
+  }
+
   function renderSongHistory() {
     return (
       <div
@@ -197,54 +240,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
         }}
       >
         {singerData?.history.map((hi, index) => (
-          <div
-            key={`${hi.name}-${hi._id}`}
-            css={{
-              position: 'relative',
-            }}
-          >
-            <button
-              onClick={() => setQuery(hi.name)}
-              css={{
-                background: colors.white,
-                color: colors.cadetblue,
-                fontSize: '0.85em',
-                margin: '2.5px',
-                borderRadius: '3px',
-                border: `solid 2px ${
-                  hi.name === query ? colors.cadetblue : colors.border
-                }`,
-                '&:hover': {
-                  border: `solid 2px ${colors.cadetblue}`,
-                },
-              }}
-            >
-              {hi.name}
-            </button>
-            <Button
-              onClick={() => handleHistoryRemove({_id: hi._id, name: hi.name})}
-              css={{
-                display: 'flex',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                position: 'absolute',
-                padding: 1,
-                top: 0,
-                right: 0,
-              }}
-            >
-              {isRemoving && query === hi.name ? (
-                <Spinner css={{width: 8, height: 8}} />
-              ) : (
-                <FaMinusCircle
-                  css={{
-                    width: 8,
-                    height: 8,
-                  }}
-                />
-              )}
-            </Button>
-          </div>
+          <HistoryItem history={hi} key={`history-item-${index}`} />
         ))}
       </div>
     )
@@ -262,9 +258,7 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
     return (
       <>
         {isSearching ? renderSpinner() : null}
-        {dataSearched?.songs.length ? (
-          dataSearched?.songs.map((vi, index) => renderSong(vi, index))
-        ) : (
+        {!dataSearched?.songs.length && !isSearching ? (
           <p
             css={{
               textAlign: 'center',
@@ -275,6 +269,8 @@ function Main({singers, activeIndex, page, setPage, query, setQuery}) {
             Hmmm... I couldn't find any songs with the query "{query}" Please
             try another.
           </p>
+        ) : (
+          dataSearched?.songs.map((vi, index) => renderSong(vi, index))
         )}
       </>
     )
