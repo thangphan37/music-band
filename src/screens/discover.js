@@ -60,6 +60,7 @@ function Singer({onSelectSinger, activeIndex, setPage, setQuery}) {
         border: `solid 1px ${colors.border}`,
         [mq.small]: {
           background: colors.white,
+          zIndex: 999,
         },
       }}
     >
